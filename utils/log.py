@@ -13,19 +13,21 @@ if not os.path.exists(LOG_DIR):
 
 LOG_FILE = os.path.join(LOG_DIR, 'game_monitor.log')
 
+
 class CustomRotatingFileHandler(RotatingFileHandler):
     """自定義的RotatingFileHandler，修改備份檔案命名格式"""
-    
+
     def rotation_filename(self, default_name):
         """自定義備份檔案名稱格式"""
         dirname, basename = os.path.split(default_name)
         prefix, ext = os.path.splitext(basename)
-        
+
         # 找出現有的備份檔案數量
         existing_files = glob.glob(os.path.join(dirname, f"{prefix}*.log"))
         backup_number = len(existing_files)
-        
+
         return os.path.join(dirname, f"{prefix}{backup_number}.log")
+
 
 def clear_log_directory():
     """清空Log資料夾"""
@@ -35,13 +37,15 @@ def clear_log_directory():
             if os.path.isfile(file_path) and filename.endswith('.log'):
                 os.remove(file_path)
 
+
 def setup_logging():
     """設定日誌系統"""
-    # 清空Log資料夾
-    clear_log_directory()
+    # 嘗試清空Log資料夾
+    try:
+        clear_log_directory()
+    except Exception as e:
+        print(f"清除log失敗: {e}")
 
-# 清空Log資料夾
-clear_log_directory()
 
 # 設定root logger
 logging.basicConfig(
@@ -49,7 +53,7 @@ logging.basicConfig(
     format='[%(asctime)s] [%(levelname)s] %(message)s',
     handlers=[
         logging.StreamHandler(),
-        CustomRotatingFileHandler(LOG_FILE, maxBytes=20*1024*1024, backupCount=3, encoding='utf-8')
+        CustomRotatingFileHandler(LOG_FILE, maxBytes=20 * 1024 * 1024, backupCount=3, encoding='utf-8')
     ]
 )
 
@@ -61,6 +65,7 @@ for handler in logging.getLogger().handlers:
     else:
         handler.setLevel(logging.INFO)
         handler.setFormatter(logging.Formatter('[%(levelname)s] %(message)s'))
+
 
 def get_logger(name=None):
     return logging.getLogger(name)

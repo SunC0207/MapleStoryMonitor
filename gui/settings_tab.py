@@ -5,7 +5,7 @@ Settings Tab Module
 
 import tkinter as tk
 from tkinter import ttk
-from typing import Dict, Callable, Any
+from typing import Callable
 from utils.log import get_logger
 
 logger = get_logger(__name__)
@@ -13,12 +13,12 @@ logger = get_logger(__name__)
 
 class SettingsTab:
     """設定標籤頁類"""
-    
+
     def __init__(self, parent_frame, capture_manager, config_callback: Callable = None):
         self.parent_frame = parent_frame
         self.capture_manager = capture_manager
         self.config_callback = config_callback
-        
+
         # 將從主視窗傳入的變數
         self.fps_var = None
         self.show_status_var = None
@@ -28,21 +28,30 @@ class SettingsTab:
         self.auto_update_var = None
         self.tab_visibility_vars = None
         self.shared_window_widget = None
-        
+
         # 個別追蹤器顯示變數
         self.tracker_exp_var = None
         self.tracker_coin_var = None
         self.tracker_potion_var = None
-        
+
         # GUI組件
         self.fps_label = None
         self.transparency_label = None
         self.tracker_sub_frame = None
-        
+
         # 多功能追蹤器widget的引用
         self.multi_tracker_widget = None
-        
-    def set_variables(self, shared_fps_var, show_status_var, show_tracker_var, tab_visibility_vars, window_pinned_var=None, window_transparency_var=None, auto_update_var=None):
+
+        # 設定喝藥水百分比及快捷鍵
+        self.enable_auto_potion = tk.BooleanVar(value=False)
+        self.health_percent = tk.StringVar(value="50")  # 預設50%
+        self.health_potion_key = tk.StringVar(value="Delete")  # 預設delete鍵
+        self.mana_percent = tk.StringVar(value="50")  # 預設50%
+        self.mana_potion_key = tk.StringVar(value="Insert")  # 預設insert鍵
+        self.auto_potion_cooldown = 1.0  # 預設1秒冷卻時間
+
+    def set_variables(self, shared_fps_var, show_status_var, show_tracker_var, tab_visibility_vars,
+                      window_pinned_var=None, window_transparency_var=None, auto_update_var=None):
         """設定從主視窗傳入的變數"""
         self.fps_var = shared_fps_var
         self.show_status_var = show_status_var
@@ -51,13 +60,14 @@ class SettingsTab:
         self.window_pinned_var = window_pinned_var
         self.window_transparency_var = window_transparency_var
         self.auto_update_var = auto_update_var
-        
+
         # 初始化個別追蹤器顯示變數
         self.tracker_exp_var = tk.BooleanVar(value=True)
         self.tracker_coin_var = tk.BooleanVar(value=True)
         self.tracker_potion_var = tk.BooleanVar(value=True)
 
-    def set_callbacks(self, update_status_visibility, update_tracker_visibility, apply_tab_visibility_changes, update_window_pinning=None, update_window_transparency=None, update_auto_update=None):
+    def set_callbacks(self, update_status_visibility, update_tracker_visibility, apply_tab_visibility_changes,
+                      update_window_pinning=None, update_window_transparency=None, update_auto_update=None):
         """設定回調函數"""
         self.update_status_visibility = update_status_visibility
         self.update_tracker_visibility = update_tracker_visibility
@@ -66,7 +76,6 @@ class SettingsTab:
         self.update_window_transparency = update_window_transparency
         self.update_auto_update = update_auto_update
 
-        
     def set_multi_tracker_widget(self, multi_tracker_widget):
         """設定多功能追蹤器widget的引用"""
         self.multi_tracker_widget = multi_tracker_widget
@@ -75,16 +84,16 @@ class SettingsTab:
         """創建設定標籤頁內容"""
         # 視窗選擇
         window_frame = ttk.Frame(self.parent_frame)
-        window_frame.pack(fill=tk.X, padx=10, pady=5)
-        
+        window_frame.pack(fill="x", padx=10, pady=5)
+
         # 動態導入以避免循環導入
         from gui.widgets.window_selection import WindowSelectionWidget
         self.shared_window_widget = WindowSelectionWidget(window_frame, self.capture_manager, None)
-        self.shared_window_widget.pack(fill=tk.X)
+        self.shared_window_widget.pack(fill="x")
 
         # 全域FPS控制
         setting_frame = ttk.LabelFrame(self.parent_frame, text="設定", padding=5)
-        setting_frame.pack(fill=tk.X, padx=10, pady=5)
+        setting_frame.pack(fill="x", padx=10, pady=5)
         # 自動更新選項
         if self.auto_update_var and self.update_auto_update:
             ttk.Checkbutton(
@@ -92,126 +101,128 @@ class SettingsTab:
                 text="啟用自動更新",
                 variable=self.auto_update_var,
                 command=self.update_auto_update
-            ).pack(anchor=tk.W, pady=1)
-        
+            ).pack(anchor="w", pady=1)
+
         if self.window_pinned_var and self.update_window_pinning:
             ttk.Checkbutton(
                 setting_frame,
                 text="釘選視窗到最前方",
                 variable=self.window_pinned_var,
                 command=self.update_window_pinning
-            ).pack(anchor=tk.W, pady=1)
-        
+            ).pack(anchor="w", pady=1)
+
         # 視窗透明度控制
         if self.window_transparency_var and self.update_window_transparency:
             transparency_frame = ttk.Frame(setting_frame)
-            transparency_frame.pack(fill=tk.X, pady=2)
-            
-            ttk.Label(transparency_frame, text="視窗透明度:").pack(side=tk.LEFT, padx=(0, 5))
-            
+            transparency_frame.pack(fill="x", pady=2)
+
+            ttk.Label(transparency_frame, text="視窗透明度:").pack(side="left", padx=(0, 5))
+
             transparency_scale = ttk.Scale(
                 transparency_frame,
                 from_=0.2,
                 to=1.0,
-                orient=tk.HORIZONTAL,
+                orient="horizontal",
                 variable=self.window_transparency_var,
                 command=lambda x: self.update_window_transparency()
             )
-            transparency_scale.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 5))
-            
+            transparency_scale.pack(side="left", fill="x", expand=True, padx=(0, 5))
+
             self.transparency_label = ttk.Label(transparency_frame, text="", font=('Arial', 9))
-            self.transparency_label.pack(side=tk.LEFT)
+            self.transparency_label.pack(side="left")
             self._update_transparency_label()
-        
+
         fps_control_frame = ttk.Frame(setting_frame)
-        fps_control_frame.pack(fill=tk.X, pady=2)
+        fps_control_frame.pack(fill="x", pady=2)
         ttk.Label(fps_control_frame, text="擷取頻率 (FPS):").grid(row=0, column=0, padx=2, sticky='w')
         ttk.Entry(fps_control_frame, textvariable=self.fps_var, width=10).grid(row=0, column=1, padx=2)
         self.fps_label = ttk.Label(setting_frame, text="", font=('Arial', 8))
-        self.fps_label.pack(anchor=tk.W, pady=(2, 0))
+        self.fps_label.pack(anchor="w", pady=(2, 0))
         self._update_fps()
-        
+
         # 顯示選項設定
         display_frame = ttk.LabelFrame(self.parent_frame, text="總覽顯示選項", padding=5)
-        display_frame.pack(fill=tk.X, padx=10, pady=5)
-        
+        display_frame.pack(fill="x", padx=10, pady=5)
+
         ttk.Checkbutton(
             display_frame,
             text="顯示當前狀態",
             variable=self.show_status_var,
             command=self.update_status_visibility
-        ).pack(anchor=tk.W, pady=1)
-        
+        ).pack(anchor="w", pady=1)
+
         ttk.Checkbutton(
             display_frame,
             text="顯示追蹤計算器",
             variable=self.show_tracker_var,
             command=self._on_tracker_visibility_changed
-        ).pack(anchor=tk.W, pady=1)
-        
+        ).pack(anchor="w", pady=1)
+
         # 追蹤器子選項框架
         self.tracker_sub_frame = ttk.Frame(display_frame)
-        self.tracker_sub_frame.pack(fill=tk.X, padx=20, pady=(5, 0))
-        
-        ttk.Label(self.tracker_sub_frame, text="追蹤器組件:", font=('Arial', 9)).pack(anchor=tk.W)
-        
+        self.tracker_sub_frame.pack(fill="x", padx=20, pady=(5, 0))
+
+        ttk.Label(self.tracker_sub_frame, text="追蹤器組件:", font=('Arial', 9)).pack(anchor="w")
+
         sub_options_frame = ttk.Frame(self.tracker_sub_frame)
-        sub_options_frame.pack(fill=tk.X, padx=10)
-        
+        sub_options_frame.pack(fill="x", padx=10)
+
         ttk.Checkbutton(
             sub_options_frame,
             text="經驗值追蹤器",
             variable=self.tracker_exp_var,
             command=self._update_individual_tracker_visibility
-        ).pack(anchor=tk.W, pady=1)
-        
+        ).pack(anchor="w", pady=1)
+
         ttk.Checkbutton(
             sub_options_frame,
             text="楓幣追蹤器",
             variable=self.tracker_coin_var,
             command=self._update_individual_tracker_visibility
-        ).pack(anchor=tk.W, pady=1)
-        
+        ).pack(anchor="w", pady=1)
+
         ttk.Checkbutton(
             sub_options_frame,
             text="藥水追蹤器",
             variable=self.tracker_potion_var,
             command=self._update_individual_tracker_visibility
-        ).pack(anchor=tk.W, pady=1)
-        
+        ).pack(anchor="w", pady=1)
+
         # 初始化子選項顯示狀態
         self._update_tracker_sub_options_visibility()
-        
+
         # 分頁顯示設定
         tabs_frame = ttk.LabelFrame(self.parent_frame, text="數據監測設定", padding=5)
-        tabs_frame.pack(fill=tk.X, padx=10, pady=5)
-        
-        ttk.Label(tabs_frame, text="選擇要監測的數據:", font=('Arial', 9, 'bold')).pack(anchor=tk.W, pady=(0, 3))
-        
+        tabs_frame.pack(fill="x", padx=10, pady=5)
+
+        ttk.Label(tabs_frame, text="選擇要監測的數據:", font=('Arial', 9, 'bold')).pack(anchor="w", pady=(0, 3))
+
         tabs_checkboxes_frame = ttk.Frame(tabs_frame)
-        tabs_checkboxes_frame.pack(fill=tk.X)
-        
+        tabs_checkboxes_frame.pack(fill="x")
+
+        self.create_auto_potion_frame()
+
         # 根據視窗寬度自適應布局
         def update_layout():
             # 獲取frame的實際寬度
             tabs_checkboxes_frame.update_idletasks()
             frame_width = tabs_checkboxes_frame.winfo_width()
-            
+
             # 估算每個checkbox的寬度（包含文字和padding）
             # 根據最長的標籤名稱估算
             max_text_length = max(len(tab_name) for tab_name in self.tab_visibility_vars.keys())
             checkbox_width = max_text_length * 8 + 40  # 減少padding
-            
+
             # 計算可容納的列數，最少1列，最多6列
             if frame_width > 0:
                 cols = max(1, min(6, frame_width // checkbox_width))
             else:
                 cols = 3  # 默認值
-            
+
             # 清除現有的checkbox
             for widget in tabs_checkboxes_frame.winfo_children():
                 widget.destroy()
-            
+
             # 重新創建checkbox
             for i, (tab_name, var) in enumerate(self.tab_visibility_vars.items()):
                 row = i // cols
@@ -222,13 +233,13 @@ class SettingsTab:
                     variable=var,
                     command=self.apply_tab_visibility_changes
                 ).grid(row=row, column=col, sticky='w', padx=5, pady=1)
-        
+
         # 初始布局
         self.parent_frame.after(100, update_layout)  # 延遲執行以確保frame已經渲染
-        
+
         # 綁定視窗大小變化事件
         self.parent_frame.bind('<Configure>', lambda e: update_layout())
-    
+
         return self.shared_window_widget
 
     def _update_fps(self, *args):
@@ -236,11 +247,11 @@ class SettingsTab:
         if not self.fps_label or not self.fps_var:
             return
 
-        try:  
+        try:
             fps = float(self.fps_var.get())
         except ValueError:
             self.fps_var.set('0.1')
-            return 
+            return
         if fps < 0.1:
             self.fps_var.set('0.1')
         elif fps > 30.0:
@@ -249,12 +260,11 @@ class SettingsTab:
         interval = 1.0 / fps if fps >= 0.1 else 0.1
         self.fps_label.config(text=f"當前: {fps:.1f} FPS (間隔: {interval:.3f}秒)")
 
-    
     def _update_transparency_label(self, *args):
         """更新透明度標籤"""
         if not self.transparency_label or not self.window_transparency_var:
             return
-            
+
         try:
             transparency = self.window_transparency_var.get()
             percentage = transparency * 100
@@ -268,7 +278,7 @@ class SettingsTab:
             self.fps_var.trace_add('write', self._update_fps)
         if self.window_transparency_var:
             self.window_transparency_var.trace_add('write', self._update_transparency_label)
-    
+
     def get_window_widget(self):
         """獲取視窗選擇控件"""
         return self.shared_window_widget
@@ -277,7 +287,7 @@ class SettingsTab:
         """追蹤器顯示狀態改變時的回調"""
         self.update_tracker_visibility()
         self._update_tracker_sub_options_visibility()
-    
+
     def _update_tracker_sub_options_visibility(self):
         """更新追蹤器子選項的顯示狀態"""
         if self.tracker_sub_frame:
@@ -289,7 +299,7 @@ class SettingsTab:
                 # 隱藏子選項
                 for widget in self.tracker_sub_frame.winfo_children():
                     widget.pack_forget()
-    
+
     def _update_individual_tracker_visibility(self):
         """更新個別追蹤器的顯示狀態"""
         if self.multi_tracker_widget:
@@ -298,3 +308,89 @@ class SettingsTab:
                 coin_visible=self.tracker_coin_var.get(),
                 potion_visible=self.tracker_potion_var.get()
             )
+
+    def create_auto_potion_frame(self):
+        auto_potion_frame = ttk.LabelFrame(self.parent_frame, text="自動喝水")
+        auto_potion_frame.pack(fill="x", padx=20, pady=5)
+
+        # 啟用自動喝水checkBox
+        enable_frame = ttk.Frame(auto_potion_frame)
+        enable_frame.pack(fill="x", padx=5, pady=2)
+        ttk.Checkbutton(enable_frame, text="啟用自動喝水",
+                        variable=self.enable_auto_potion).pack(side="left")
+
+        # HP设置
+        hp_frame = ttk.Frame(auto_potion_frame)
+        hp_frame.pack(fill="x", padx=5, pady=2)
+        ttk.Label(hp_frame, text="HP低於").pack(side="left")
+        ttk.Entry(hp_frame, textvariable=self.health_percent,
+                  width=5).pack(side="left")
+        ttk.Label(hp_frame, text="%時 按鍵").pack(side="left")
+        self.hp_key_button = ttk.Button(
+            hp_frame,
+            textvariable=self.health_potion_key,
+            width=8,
+            command=lambda: self.start_key_recording('hp')
+        )
+        self.hp_key_button.pack(side="left")
+        ttk.Label(hp_frame, text="補血").pack(side="left")
+
+        # MP设置
+        mp_frame = ttk.Frame(auto_potion_frame)
+        mp_frame.pack(fill="x", padx=5, pady=2)
+        ttk.Label(mp_frame, text="MP低於").pack(side="left")
+        ttk.Entry(mp_frame, textvariable=self.mana_percent,
+                  width=5).pack(side="left")
+        ttk.Label(mp_frame, text="%時，按鍵").pack(side="left")
+        self.mp_key_button = ttk.Button(
+            mp_frame,
+            textvariable=self.mana_potion_key,
+            width=8,
+            command=lambda: self.start_key_recording('mp')
+        )
+        self.mp_key_button.pack(side="left")
+        ttk.Label(mp_frame, text="補魔").pack(side="left")
+
+    def start_key_recording(self, key_type):
+        """開始錄製按鍵"""
+        # disable按鍵
+        self.hp_key_button.config(state="disabled")
+        self.mp_key_button.config(state="disabled")
+
+        def on_key_press(event):
+            # 記錄按下的鍵
+            key = event.keysym
+            if key_type == 'hp':
+                self.health_potion_key.set(key)
+            else:
+                self.mana_potion_key.set(key)
+
+            # 解除按鈕狀態
+            self.hp_key_button.config(state="normal")
+            self.hp_key_button.config(state="enabled")
+            self.mp_key_button.config(state="enabled")
+
+            # 解除绑定
+            self.parent_frame.unbind('<Key>')
+
+        self.parent_frame.bind('<Key>', on_key_press)
+        self.parent_frame.focus_force()
+
+    def get_auto_potion_config(self):
+        """"""
+        return {
+            'enabled': self.enable_auto_potion.get(),
+            'hp_percent': float(self.health_percent.get()),
+            'mp_percent': float(self.mana_percent.get()),
+            'hp_key': self.health_potion_key.get(),
+            'mp_key': self.mana_potion_key.get()
+        }
+
+    def load_auto_potion_config(self, config):
+        """載入自動喝水設定"""
+        if config:
+            self.enable_auto_potion.set(config.get('enabled', False))
+            self.health_percent.set(str(config.get('hp_percent', 50)))
+            self.mana_percent.set(str(config.get('mp_percent', 50)))
+            self.health_potion_key.set(config.get('hp_key', '1'))
+            self.mana_potion_key.set(config.get('mp_key', '2'))
