@@ -49,6 +49,7 @@ class SettingsTab:
         self.mana_percent = tk.StringVar(value="50")  # 預設50%
         self.mana_potion_key = tk.StringVar(value="Insert")  # 預設insert鍵
         self.auto_potion_cooldown = 1.0  # 預設1秒冷卻時間
+        self.last_potion_time = {'hp': 0, 'mp': 0}  # 紀錄上次喝水時間
 
     def set_variables(self, shared_fps_var, show_status_var, show_tracker_var, tab_visibility_vars,
                       window_pinned_var=None, window_transparency_var=None, auto_update_var=None):

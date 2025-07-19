@@ -7,12 +7,9 @@ import tkinter as tk
 from tkinter import ttk
 import threading
 import time
-from typing import Dict, Any
 import os
 import ctypes
 
-from gui.widgets.window_selection import WindowSelectionWidget
-from gui.widgets.frequency_control import FrequencyControlWidget
 from gui.widgets.multi_tracker import MultiTrackerWidget
 from gui.monitor_tab import GameMonitorTab
 from gui.settings_tab import SettingsTab
